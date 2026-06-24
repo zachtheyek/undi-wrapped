@@ -1,0 +1,23 @@
+{
+  "name": "undi-wrapped",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "data": "python3 scripts/build_data.py",
+    "dev": "vite",
+    "build": "vite build && node scripts/gen_og.mjs && node scripts/prerender.mjs",
+    "og": "node scripts/gen_og.mjs",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@fontsource/space-grotesk": "^5.2.10",
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.12.0",
+    "satori-html": "^0.3.2"
+  }
+}

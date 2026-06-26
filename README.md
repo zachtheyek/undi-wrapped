@@ -21,10 +21,17 @@ This project only visualises that corpus. It is **not affiliated** with the auth
 
 ## What's inside
 
+- **Instagram-stories navigation.** Auto-advancing cards with a countdown progress bar;
+  tap the screen edges or use ◀ ▶ arrow keys; hold to pause.
+- **An animated constituency boundary** on the cover, morphing through every delimitation
+  the seat lived through (1954–2019), built from MECo's electoral maps.
+- **Official party & coalition logos** on the roll-call, dynasty and head-to-head cards.
+- **Head-to-head infographics** for the biggest swing and the closest-ever race — logos on
+  each side, a party-coloured vote-share bar in the middle.
 - **One search box, no login, mobile-first.** Works one-handed in five seconds.
-- **A permalink per seat** (`/seat/<slug>/`) with a **pre-rendered Open Graph card**, so
-  every share on X / WhatsApp renders a rich, screenshot-native image.
-- **Compare mode** (`?compare=<slug>`) — send your seat against a friend's.
+- **A permalink per seat** (`/seat/<slug>/`) with a **pre-rendered Open Graph card**.
+- **Compare mode** — pick a friend's seat and watch the two go head to head on coloured
+  metric bars.
 - Fully static — 822 seat pages + OG images generated at build time.
 
 ## Methodology & honest caveats
@@ -40,17 +47,36 @@ This project only visualises that corpus. It is **not affiliated** with the auth
 - **Biggest swing** = the largest absolute change in the winning party's vote share between
   consecutive contests at that seat.
 - **Marginality rank** = rank by latest winning margin among current seats of the same type.
+- **Boundary animation.** Frames are matched to the seat by `(state, normalised name)` across
+  each delimitation, then simplified. Seats that were genuinely *renamed* (not just
+  renumbered) only show the delimitations under their current name — the same name-threading
+  caveat as above. 821 / 822 seats have at least one frame.
+- **Candidate "photos".** There is **no public dataset of official candidate portraits**
+  keyed to the time each person was elected — across 14k candidates and seven decades it
+  simply doesn't exist, and auto-matching faces risks showing the *wrong* person. We
+  therefore show a tasteful **monogram avatar** (initials on a party-coloured disc) rather
+  than a possibly-incorrect photo.
+- **Logos** are the official party/coalition marks served by electiondata.my (`<uid>.png`),
+  self-hosted here. Historical logo variants "at the time" aren't available as data, so the
+  current/canonical mark is used.
+- **electiondata.my link.** electiondata.my's seats page selects seats purely client-side
+  with **no URL parameter**, so a link cannot pre-populate a specific seat — the "Explore on
+  electiondata.my" button opens the seats explorer, where you search the seat yourself.
 
 ## Build
 
 ```bash
 npm install
-npm run data      # regenerate public/data/ from ../meco-data/out (needs the foundation repo + Python)
+npm run data      # regenerate public/data/ from ../meco-data/out (needs the foundation + Python)
+python scripts/boundary_build.py   # regenerate public/boundaries/ from MECo electoral maps
 npm run dev       # local dev
 npm run build     # vite build + 822 OG cards (satori) + per-seat prerender → dist/
 ```
 
-`public/data/` is committed, so CI builds need only Node (no Python).
+`public/data/`, `public/boundaries/` and `public/logos/` are committed, so CI builds need
+only Node (no Python, no map downloads). Boundaries are built from MECo's electoral-map
+GeoJSONs; logos are sourced from electiondata.my (CC0 data; logos are party trademarks used
+informationally).
 
 ## Licence
 

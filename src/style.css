@@ -87,17 +87,15 @@ img { display: block; }
 .rollcall__nm { font-size: 13px; font-weight: 700; }
 .rollcall__w { font-size: 12px; opacity: .8; font-variant-numeric: tabular-nums; }
 
-/* head-to-head (compare-bar style) */
-.hh { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
-.hh-row { display: grid; grid-template-columns: clamp(86px, 28vw, 124px) 1fr auto; align-items: center; gap: 10px; }
-.hh-team { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; min-width: 0; }
-.hh-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hh-track { height: 26px; background: rgba(255,255,255,.14); border-radius: 9px; overflow: hidden; }
-.hh-fill { height: 100%; border-radius: 9px; opacity: .5; transition: width .6s ease; }
-.hh-row.win .hh-fill { opacity: 1; }
-.hh-row.win .hh-track { box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
-.hh-val { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 58px; text-align: right; }
-.hh-cap { font-size: 13px; opacity: .85; margin-top: 6px; text-align: center; line-height: 1.35; }
+/* head-to-head (swing / closest-race slides) — logos either side of a split bar */
+.h2h { display: grid; grid-template-columns: 1fr 1.25fr 1fr; align-items: center; gap: 8px; margin-top: 24px; }
+.h2h__side { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.h2h__nm { font-weight: 700; font-size: 15px; }
+.h2h__pc { font-size: clamp(22px,6vw,30px); font-weight: 700; font-variant-numeric: tabular-nums; }
+.h2h__mid { display: flex; flex-direction: column; gap: 8px; }
+.h2h__bar { display: flex; height: 16px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+.h2h__bar span { display: block; transition: width .5s; }
+.h2h__cap { font-size: 12px; text-align: center; opacity: .85; line-height: 1.35; }
 
 /* turnout bars */
 .turnout { display: flex; align-items: flex-end; justify-content: center; gap: 36px; margin: 26px 0 8px; height: 190px; }
@@ -151,13 +149,13 @@ img { display: block; }
 .searchmini input::placeholder { color: rgba(255,255,255,.65); }
 .ac { position: absolute; top: 46px; left: 0; right: 0; background: #1b1b27; border: 1px solid #2c2c3a; border-radius: 12px; z-index: 30; max-height: 40vh; overflow-y: auto; text-align: left; }
 .cmp__metric { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 7px; }
-.cmp__bars { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cmp__b { display: flex; align-items: center; gap: 8px; background: #15151f; border-radius: 11px; padding: 9px 11px; min-height: 42px; }
-.cmp__b--l { flex-direction: row-reverse; }
-.cmp__b.win { box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
-.cmp__fill { height: 12px; border-radius: 6px; min-width: 4px; opacity: .5; }
-.cmp__b.win .cmp__fill { opacity: 1; }
-.cmp__v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* compare metric = head-to-head split bar (values flanking a single diverging bar) */
+.h2hrow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+.h2hrow__v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 54px; opacity: .55; white-space: nowrap; }
+.h2hrow__v:first-child { text-align: right; }
+.h2hrow__v.win { opacity: 1; }
+.h2hrow__bar { display: flex; height: 18px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.h2hrow__bar span { display: block; transition: width .5s; }
 .cmp__legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 16px; }
 .cmp__legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .cmp__actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }

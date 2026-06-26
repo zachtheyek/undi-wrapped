@@ -4,3 +4,4 @@ dist/
 *.log
 * [0-9].json
 * [0-9].png
+announcement-assets/

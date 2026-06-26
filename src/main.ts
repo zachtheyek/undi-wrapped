@@ -176,15 +176,16 @@ function lineChart(points: { x: number; y: number; color: string }[], opts: { yM
 
 type HHSide = { party: string; uid?: string | null; color: string; perc: number | null };
 function headToHead(L: HHSide, R: HHSide, caption: string) {
-  const max = Math.max(L.perc ?? 0, R.perc ?? 0, 1);
-  const lWin = (L.perc ?? 0) >= (R.perc ?? 0);
-  const row = (p: HHSide, win: boolean) => `
-    <div class="hh-row${win ? " win" : ""}">
-      <div class="hh-team">${partyLogo(p.uid, p.party, p.color, 30)}<span class="hh-name">${esc(p.party)}</span></div>
-      <div class="hh-track"><div class="hh-fill" style="width:${((p.perc ?? 0) / max * 100).toFixed(1)}%;background:${p.color}"></div></div>
-      <div class="hh-val">${p.perc != null ? num(p.perc) + "%" : "—"}</div>
-    </div>`;
-  return `<div class="hh">${row(L, lWin)}${row(R, !lWin)}<div class="hh-cap">${caption}</div></div>`;
+  const lp = L.perc ?? 0, rp = R.perc ?? 0, tot = lp + rp || 1;
+  const lpct = (lp / tot) * 100;
+  return `<div class="h2h">
+    <div class="h2h__side">${partyLogo(L.uid, L.party, L.color, 64)}<div class="h2h__nm">${esc(L.party)}</div><div class="h2h__pc">${L.perc != null ? num(L.perc) + "%" : "—"}</div></div>
+    <div class="h2h__mid">
+      <div class="h2h__bar"><span style="width:${lpct}%;background:${L.color}"></span><span style="width:${100 - lpct}%;background:${R.color}"></span></div>
+      <div class="h2h__cap">${caption}</div>
+    </div>
+    <div class="h2h__side">${partyLogo(R.uid, R.party, R.color, 64)}<div class="h2h__nm">${esc(R.party)}</div><div class="h2h__pc">${R.perc != null ? num(R.perc) + "%" : "—"}</div></div>
+  </div>`;
 }
 
 function turnoutBars(seatVal: number, natVal: number) {
@@ -404,14 +405,18 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
   const idx = await loadIndex();
   const gradA = GRADIENTS[0], gradB = GRADIENTS[3];
 
+  // head-to-head split bar (same style as the swing / closest-race slides):
+  // one diverging bar per metric, seat A (red) left, seat B (teal) right, split by value.
   function metricBar(label: string, va: number | null, vb: number | null, fmt: (v: number) => string, higherWins = false) {
-    const a0 = va ?? 0, b0 = vb ?? 0, max = Math.max(a0, b0, 1);
+    const a0 = va ?? 0, b0 = vb ?? 0, tot = a0 + b0 || 1;
+    const aPct = (a0 / tot) * 100;
     const aWin = va != null && vb != null && (higherWins ? va > vb : va < vb);
     const bWin = va != null && vb != null && (higherWins ? vb > va : vb < va);
     return `<div class="cmp__metric">${label}</div>
-      <div class="cmp__bars">
-        <div class="cmp__b cmp__b--l ${aWin ? "win" : ""}"><span class="cmp__v">${va != null ? fmt(va) : "—"}</span><div class="cmp__fill" style="width:${(a0 / max * 100).toFixed(0)}%;background:#ff5e7a"></div></div>
-        <div class="cmp__b cmp__b--r ${bWin ? "win" : ""}"><div class="cmp__fill" style="width:${(b0 / max * 100).toFixed(0)}%;background:#37c7d4"></div><span class="cmp__v">${vb != null ? fmt(vb) : "—"}</span></div>
+      <div class="h2hrow">
+        <span class="h2hrow__v ${aWin ? "win" : ""}">${va != null ? fmt(va) : "—"}</span>
+        <div class="h2hrow__bar"><span style="width:${aPct.toFixed(1)}%;background:#ff5e7a"></span><span style="width:${(100 - aPct).toFixed(1)}%;background:#37c7d4"></span></div>
+        <span class="h2hrow__v ${bWin ? "win" : ""}">${vb != null ? fmt(vb) : "—"}</span>
       </div>`;
   }
 
@@ -430,7 +435,7 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
         ${metricBar("Closest ever (pts)", a.closest?.margin_perc ?? null, bIn.closest?.margin_perc ?? null, (v) => num(v, 2), false)}
         ${metricBar("Marginality rank (1 = tightest)", a.marginality_rank?.rank ?? null, bIn.marginality_rank?.rank ?? null, (v) => "#" + Math.round(v), false)}
         ${metricBar("Latest turnout (%)", a.current_holder.turnout, bIn.current_holder.turnout, (v) => num(v), true)}
-        <div class="cmp__legend"><span><i style="background:#ff5e7a"></i>${esc(a.current_name)}</span><span><i style="background:#37c7d4"></i>${esc(bIn.current_name)}</span> · brighter bar = "more" of that metric</div>
+        <div class="cmp__legend"><span><i style="background:#ff5e7a"></i>${esc(a.current_name)}</span><span><i style="background:#37c7d4"></i>${esc(bIn.current_name)}</span> · each bar splits the two seats; the bold number leads</div>
         <div class="cmp__actions">
           <button class="primary" id="cmp-copy">🔗 Copy compare link</button>
           <button id="cmp-toA">← Back to ${esc(a.current_name)}</button>

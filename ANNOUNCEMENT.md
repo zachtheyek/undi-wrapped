@@ -2,7 +2,10 @@
 
 **Live:** https://zachtheyek.github.io/undi-wrapped/
 **Assets** (in `announcement-assets/`):
-- `undi-wrapped-demo.gif` — 6-beat swipe-through demo (boundary morph → roll-call → trajectory → swing → photo-finish). Primary visual.
+- `undi-wrapped-demo.gif` — swipe-through demo (boundary morph → roll-call → trajectory → head-to-head slides → the Compare screen). Primary visual.
+- `undi-wrapped-cover.png` — the cover (animated boundary + seat identity).
+- `undi-wrapped-headtohead.png` — a head-to-head slide (logos either side of a split bar).
+- `undi-wrapped-compare.png` — the Compare ("Head to head") screen.
 - `og-card-bagan.png` — clean 1200×630 share card (this is also what auto-renders when the link is pasted anywhere).
 - For an even better demo, a 15–20s **portrait phone screen-recording** (search a seat → swipe → tap "Compare") beats the GIF — record one on your phone if you have 30 seconds.
 

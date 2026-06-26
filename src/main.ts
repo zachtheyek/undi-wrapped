@@ -20,7 +20,7 @@ interface Seat {
   current_holder: { party: string; party_uid?: string | null; coalition: string | null; name: string; year: number; margin_perc: number | null; win_perc?: number | null; run_party?: string | null; run_perc?: number | null; turnout: number | null; uncontested: boolean };
   parties_won: PartyRef[]; n_distinct_winning_parties: number; dominant_party: PartyRef | null;
   closest: { year: number; win_party: string; win_party_uid?: string | null; run_party: string; run_party_uid?: string | null; win_perc: number | null; run_perc: number | null; margin_perc: number } | null;
-  biggest_swing: { year: number; swing_pp: number; from_coalition: string | null; to_coalition: string | null; flipped: boolean; win_party: string; win_party_uid?: string | null; win_perc?: number | null; run_party?: string | null; run_party_uid?: string | null; run_perc?: number | null; prev_win_perc?: number | null } | null;
+  biggest_swing: { year: number; swing_pp: number; from_coalition: string | null; to_coalition: string | null; flipped: boolean; win_party: string; win_party_uid?: string | null; win_perc?: number | null; run_party?: string | null; run_party_uid?: string | null; run_perc?: number | null; prev_year?: number; prev_win_party?: string | null; prev_win_party_uid?: string | null; prev_win_perc?: number | null; prev_run_party?: string | null; prev_run_party_uid?: string | null; prev_run_perc?: number | null } | null;
   marginality_rank: { rank: number; total: number; scope: string } | null;
   turnout_ref: { national_avg: number; latest_year: number };
   timeline: TL[];
@@ -175,16 +175,16 @@ function lineChart(points: { x: number; y: number; color: string }[], opts: { yM
 }
 
 type HHSide = { party: string; uid?: string | null; color: string; perc: number | null };
-function headToHead(L: HHSide, R: HHSide, caption: string) {
+function headToHead(L: HHSide, R: HHSide, caption: string, size = 64) {
   const lp = L.perc ?? 0, rp = R.perc ?? 0, tot = lp + rp || 1;
   const lpct = (lp / tot) * 100;
   return `<div class="h2h">
-    <div class="h2h__side">${partyLogo(L.uid, L.party, L.color, 64)}<div class="h2h__nm">${esc(L.party)}</div><div class="h2h__pc">${L.perc != null ? num(L.perc) + "%" : "—"}</div></div>
+    <div class="h2h__side">${partyLogo(L.uid, L.party, L.color, size)}<div class="h2h__nm">${esc(L.party)}</div><div class="h2h__pc">${L.perc != null ? num(L.perc) + "%" : "—"}</div></div>
     <div class="h2h__mid">
       <div class="h2h__bar"><span style="width:${lpct}%;background:${L.color}"></span><span style="width:${100 - lpct}%;background:${R.color}"></span></div>
-      <div class="h2h__cap">${caption}</div>
+      ${caption ? `<div class="h2h__cap">${caption}</div>` : ""}
     </div>
-    <div class="h2h__side">${partyLogo(R.uid, R.party, R.color, 64)}<div class="h2h__nm">${esc(R.party)}</div><div class="h2h__pc">${R.perc != null ? num(R.perc) + "%" : "—"}</div></div>
+    <div class="h2h__side">${partyLogo(R.uid, R.party, R.color, size)}<div class="h2h__nm">${esc(R.party)}</div><div class="h2h__pc">${R.perc != null ? num(R.perc) + "%" : "—"}</div></div>
   </div>`;
 }
 
@@ -217,6 +217,8 @@ function mountBoundary(host: HTMLElement, b: Boundary) {
 
 // ---------- deck ----------
 const DURATION = 7000; // auto-advance per slide (ms)
+const ICON_PAUSE = `<svg width="13" height="13" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx="1"/><rect x="7" y="1" width="3" height="10" rx="1"/></svg>`;
+const ICON_PLAY = `<svg width="13" height="13" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M3 1.4 L10.4 6 L3 10.6 Z"/></svg>`;
 function renderDeck(s: Seat, startAt = 0) {
   document.title = `${seatLabel(s)} — Undi Wrapped`;
   const dom = s.dominant_party, ch = s.current_holder;
@@ -269,15 +271,32 @@ function renderDeck(s: Seat, startAt = 0) {
       <div class="tiny">Winning margin (percentage points) at each election. Higher = a safer seat; dips near the floor are the nail-biters.</div>`);
   }
 
-  // 5 biggest swing (head-to-head)
-  if (s.biggest_swing && s.biggest_swing.win_perc != null && s.biggest_swing.run_party) {
+  // 5 biggest swing (two stacked results: previous election on top, current below)
+  if (s.biggest_swing && s.biggest_swing.win_perc != null && s.biggest_swing.run_party && s.biggest_swing.prev_win_party && s.biggest_swing.prev_run_party) {
     const bs = s.biggest_swing;
-    const cap = `${bs.swing_pp > 0 ? "+" : ""}${num(bs.swing_pp)} pt swing vs the previous election${bs.flipped ? " — and it flipped." : "."}`;
+    const swing = `${bs.swing_pp > 0 ? "+" : ""}${num(bs.swing_pp)} pt swing`;
+    const prevBar = headToHead({ party: bs.prev_win_party!, uid: bs.prev_win_party_uid, color: partyColor(bs.prev_win_party!), perc: bs.prev_win_perc ?? null },
+                               { party: bs.prev_run_party!, uid: bs.prev_run_party_uid, color: partyColor(bs.prev_run_party!), perc: bs.prev_run_perc ?? null }, "", 52);
+    const currBar = headToHead({ party: bs.win_party, uid: bs.win_party_uid, color: partyColor(bs.win_party), perc: bs.win_perc ?? null },
+                               { party: bs.run_party!, uid: bs.run_party_uid, color: partyColor(bs.run_party!), perc: bs.run_perc ?? null }, "", 52);
+    cards.push(`
+      <div class="kicker">The earthquake</div>
+      <div class="sub" style="margin-top:4px">The ground moved most in <strong>${bs.year}</strong></div>
+      <div class="quake">
+        <div class="quake__yr">${bs.prev_year}</div>
+        ${prevBar}
+        <div class="quake__swing">${swing}</div>
+        <div class="quake__yr">${bs.year}</div>
+        ${currBar}
+      </div>`);
+  } else if (s.biggest_swing && s.biggest_swing.win_perc != null && s.biggest_swing.run_party) {
+    const bs = s.biggest_swing;
+    const swing = `${bs.swing_pp > 0 ? "+" : ""}${num(bs.swing_pp)} pt swing`;
     cards.push(`
       <div class="kicker">The earthquake</div>
       <div class="sub" style="margin-top:4px">The ground moved most in <strong>${bs.year}</strong></div>
       ${headToHead({ party: bs.win_party, uid: bs.win_party_uid, color: partyColor(bs.win_party), perc: bs.win_perc ?? null },
-                   { party: bs.run_party!, uid: bs.run_party_uid, color: partyColor(bs.run_party!), perc: bs.run_perc ?? null }, cap)}`);
+                   { party: bs.run_party!, uid: bs.run_party_uid, color: partyColor(bs.run_party!), perc: bs.run_perc ?? null }, swing)}`);
   } else if (s.biggest_swing) {
     const bs = s.biggest_swing;
     cards.push(`<div class="kicker">The earthquake</div><div class="sub" style="margin-top:8px">The ground moved most in</div><div class="big">${bs.year}</div>
@@ -331,7 +350,7 @@ function renderDeck(s: Seat, startAt = 0) {
 
   app.innerHTML = `
     <div class="progress" id="progress">${cards.map(() => `<span><i></i></span>`).join("")}</div>
-    <div class="topbar"><button id="back">← Search</button><button id="restart">↻ Restart</button></div>
+    <div class="topbar"><button id="back">← Search</button><div class="topbar__right"><button id="playpause" class="iconbtn" aria-label="Pause" title="Pause">${ICON_PAUSE}</button><button id="restart" class="iconbtn" aria-label="Restart" title="Restart">↻</button></div></div>
     <div class="deck" id="deck">
       ${cards.map((c, i) => `<section class="card" data-i="${i}" style="background:${GRADIENTS[i % GRADIENTS.length]}"><div class="card__body">${c}</div></section>`).join("")}
     </div>
@@ -340,7 +359,7 @@ function renderDeck(s: Seat, startAt = 0) {
   const deck = document.getElementById("deck")!;
   const sections = [...deck.querySelectorAll(".card")] as HTMLElement[];
   const bars = [...document.querySelectorAll("#progress span i")] as HTMLElement[];
-  let current = -1, anim: Animation | null = null, paused = false;
+  let current = -1, anim: Animation | null = null, paused = false, manualPaused = false;
 
   function show(i: number) {
     if (i < 0 || i >= sections.length) return;
@@ -372,11 +391,11 @@ function renderDeck(s: Seat, startAt = 0) {
   deck.addEventListener("pointerup", (e) => {
     if (isCtl(e.target)) return;
     clearTimeout(holdTimer);
-    if (held) { resume(); held = false; return; }
+    if (held) { if (!manualPaused) resume(); held = false; return; }
     const left = downX < window.innerWidth * 0.33;
     if (Date.now() - downT < 500) { left ? prev() : next(); }
   });
-  deck.addEventListener("pointercancel", () => { clearTimeout(holdTimer); if (held) { resume(); held = false; } });
+  deck.addEventListener("pointercancel", () => { clearTimeout(holdTimer); if (held) { if (!manualPaused) resume(); held = false; } });
 
   const keyHandler = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") { e.preventDefault(); next(); }
@@ -389,6 +408,14 @@ function renderDeck(s: Seat, startAt = 0) {
 
   document.getElementById("back")!.onclick = () => { history.pushState({}, "", BASE); route(); };
   document.getElementById("restart")!.onclick = () => show(0);
+  const ppBtn = document.getElementById("playpause")!;
+  ppBtn.onclick = () => {
+    manualPaused = !manualPaused;
+    if (manualPaused) pause(); else resume();
+    ppBtn.innerHTML = manualPaused ? ICON_PLAY : ICON_PAUSE;
+    const lbl = manualPaused ? "Play" : "Pause";
+    ppBtn.setAttribute("aria-label", lbl); ppBtn.setAttribute("title", lbl);
+  };
   deck.addEventListener("click", (e) => {
     const act = (e.target as HTMLElement).closest("[data-act]")?.getAttribute("data-act");
     if (act === "share") { navigator.clipboard.writeText(pageUrl); toast("Link copied"); }

@@ -107,7 +107,12 @@ for key, g in cur.groupby("seat_key"):
                 "win_perc": F(curr.win_votes_perc, 1),
                 "run_party": curr.run_party, "run_party_uid": U(curr.run_party_uid), "run_coalition": U(curr.run_coalition),
                 "run_perc": F(curr.run_votes_perc, 1),
+                # full previous-election result (for the two-result earthquake layout)
+                "prev_year": int(prev.year),
+                "prev_win_party": prev.win_party, "prev_win_party_uid": U(prev.win_party_uid),
                 "prev_win_perc": F(prev.win_votes_perc, 1),
+                "prev_run_party": U(prev.run_party), "prev_run_party_uid": U(prev.run_party_uid),
+                "prev_run_perc": F(prev.run_votes_perc, 1),
             }
 
     rank = None

@@ -44,9 +44,6 @@ function partyLogo(uid: string | null | undefined, label: string, color: string,
   const img = uid ? `<img class="logo" src="${BASE}logos/parties/${uid}.png" width="${size}" height="${size}" alt="${esc(label)} logo" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : "";
   return `<span class="logowrap" style="width:${size}px;height:${size}px">${img}${badge}</span>`;
 }
-function avatar(name: string, color: string, size = 72): string {
-  return `<span class="avatar" style="width:${size}px;height:${size}px;background:linear-gradient(150deg,${color},rgba(0,0,0,.35));font-size:${size * 0.38}px">${esc(initials(name))}</span>`;
-}
 
 function go(slug: string, compare?: string | null) {
   history.pushState({}, "", `${BASE}seat/${slug}/` + (compare ? `?compare=${compare}` : ""));
@@ -177,17 +174,17 @@ function lineChart(points: { x: number; y: number; color: string }[], opts: { yM
   </svg></div>`;
 }
 
-function headToHead(L: { party: string; uid?: string | null; color: string; perc: number | null }, R: { party: string; uid?: string | null; color: string; perc: number | null }, caption: string) {
-  const lp = L.perc ?? 0, rp = R.perc ?? 0, tot = lp + rp || 1;
-  const lpct = (lp / tot) * 100;
-  return `<div class="h2h">
-    <div class="h2h__side">${partyLogo(L.uid, L.party, L.color, 64)}<div class="h2h__nm">${esc(L.party)}</div><div class="h2h__pc">${L.perc != null ? num(L.perc) + "%" : "—"}</div></div>
-    <div class="h2h__mid">
-      <div class="h2h__bar"><span style="width:${lpct}%;background:${L.color}"></span><span style="width:${100 - lpct}%;background:${R.color}"></span></div>
-      <div class="h2h__cap">${caption}</div>
-    </div>
-    <div class="h2h__side">${partyLogo(R.uid, R.party, R.color, 64)}<div class="h2h__nm">${esc(R.party)}</div><div class="h2h__pc">${R.perc != null ? num(R.perc) + "%" : "—"}</div></div>
-  </div>`;
+type HHSide = { party: string; uid?: string | null; color: string; perc: number | null };
+function headToHead(L: HHSide, R: HHSide, caption: string) {
+  const max = Math.max(L.perc ?? 0, R.perc ?? 0, 1);
+  const lWin = (L.perc ?? 0) >= (R.perc ?? 0);
+  const row = (p: HHSide, win: boolean) => `
+    <div class="hh-row${win ? " win" : ""}">
+      <div class="hh-team">${partyLogo(p.uid, p.party, p.color, 30)}<span class="hh-name">${esc(p.party)}</span></div>
+      <div class="hh-track"><div class="hh-fill" style="width:${((p.perc ?? 0) / max * 100).toFixed(1)}%;background:${p.color}"></div></div>
+      <div class="hh-val">${p.perc != null ? num(p.perc) + "%" : "—"}</div>
+    </div>`;
+  return `<div class="hh">${row(L, lWin)}${row(R, !lWin)}<div class="hh-cap">${caption}</div></div>`;
 }
 
 function turnoutBars(seatVal: number, natVal: number) {
@@ -238,8 +235,7 @@ function renderDeck(s: Seat, startAt = 0) {
   // 1 origin
   cards.push(`
     <div class="kicker">In the beginning</div>
-    <div class="avrow">${avatar(s.founding.name, partyColor(s.founding.party), 72)}</div>
-    <div class="sub">It all started in</div>
+    <div class="sub" style="margin-top:14px">It all started in</div>
     <div class="big" style="margin:2px 0 6px">${s.founding.year}</div>
     <div class="sub">First won by <strong>${esc(s.founding.name)}</strong></div>
     <div class="partyline">${partyLogo(s.founding.party_uid, s.founding.party, partyColor(s.founding.party), 34)}<strong>${esc(s.founding.party)}</strong>${s.founding.seat_name !== s.current_name ? `<span style="opacity:.8"> · then called <strong>${esc(s.founding.seat_name)}</strong></span>` : ""}</div>`);
@@ -301,7 +297,7 @@ function renderDeck(s: Seat, startAt = 0) {
   const mr = s.marginality_rank;
   cards.push(`
     <div class="kicker">Right now</div>
-    <div class="avrow">${avatar(ch.name, partyColor(ch.party), 72)}</div>
+    <div class="sub" style="margin-top:14px">Your current rep:</div>
     <div class="headline" style="font-size:clamp(28px,8vw,44px)">${esc(ch.name)}</div>
     <div class="partyline">${partyLogo(ch.party_uid, ch.party, partyColor(ch.party), 32)}<strong>${esc(ch.party)}</strong>${ch.coalition && ch.coalition !== "ALONE" ? ` · ${esc(ch.coalition)}` : ""}</div>
     <div class="sub">won ${ch.uncontested ? "<strong>unopposed</strong>" : `by <strong>${num(ch.margin_perc ?? 0)} pts</strong>`} in ${ch.year}.</div>

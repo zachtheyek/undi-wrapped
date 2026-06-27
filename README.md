@@ -12,12 +12,12 @@ the closest calls, and how marginal your seat is right now.
 ## Credit
 
 All underlying data is the **Malaysian Election Corpus (MECo)** by
-**[Thevesh Thevananthan](https://electiondata.my)** — released under CC0.
+**[Thevesh Thevananthan](https://x.com/Thevesh)** — released under CC0.
 This project only visualises that corpus. It is **not affiliated** with the author.
 
 - Data & API: **[electiondata.my](https://electiondata.my)**
 - Corpus: [github.com/Thevesh/paper-meco-results](https://github.com/Thevesh/paper-meco-results)
-- Paper: *The Malaysian Election Corpus (MECo)*, **Scientific Data 13, 190 (2026)**
+- Paper: _The Malaysian Election Corpus (MECo)_, **Scientific Data 13, 190 (2026)**
 
 ## What's inside
 
@@ -37,9 +37,9 @@ This project only visualises that corpus. It is **not affiliated** with the auth
 
 ## Methodology & honest caveats
 
-- **Seat threading.** Malaysian seat identity is *not* stable across delimitations:
-  numbers are reassigned and names change (`P.001` was *Wellesley North → Perlis Utara →
-  Kangar → Padang Besar*). We thread a seat's history by **normalised name within a
+- **Seat threading.** Malaysian seat identity is _not_ stable across delimitations:
+  numbers are reassigned and names change (`P.001` was _Wellesley North → Perlis Utara →
+  Kangar → Padang Besar_). We thread a seat's history by **normalised name within a
   state**, which is honest but name-based, not boundary-based. A seat's pre-rename history
   may therefore be incomplete. For true boundary lineage, see the geospatial seat view on
   [electiondata.my](https://electiondata.my/seats/).
@@ -49,12 +49,12 @@ This project only visualises that corpus. It is **not affiliated** with the auth
   consecutive contests at that seat.
 - **Marginality rank** = rank by latest winning margin among current seats of the same type.
 - **Boundary animation.** Frames are matched to the seat by `(state, normalised name)` across
-  each delimitation, then simplified. Seats that were genuinely *renamed* (not just
+  each delimitation, then simplified. Seats that were genuinely _renamed_ (not just
   renumbered) only show the delimitations under their current name — the same name-threading
   caveat as above. 821 / 822 seats have at least one frame.
 - **Candidate photos.** There is **no public dataset of official candidate portraits**
   keyed to the time each person was elected — across 14k candidates and seven decades it
-  simply doesn't exist, and auto-matching faces risks showing the *wrong* person. We
+  simply doesn't exist, and auto-matching faces risks showing the _wrong_ person. We
   therefore identify each rep by **name only**, never a photo.
 - **Logos** are the official party/coalition marks served by electiondata.my (`<uid>.png`),
   self-hosted here. Historical logo variants "at the time" aren't available as data, so the

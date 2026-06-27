@@ -471,7 +471,7 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
   }
 
   app.innerHTML = `<div class="cmp"><div class="cmp__inner">
-    <div class="cmp__top"><button id="cmp-back" class="ghostbtn">← Back</button><h1>Head to head</h1><span style="width:60px"></span></div>
+    <div class="cmp__top"><button id="cmp-back" class="ghostbtn">← Back</button><h1>Head-to-head</h1><span style="width:60px"></span></div>
     <div class="cmp__grid">
       <div class="cmp__heads">${head(a, gradA)}${head(bIn, gradB, true)}</div>
       ${bIn ? `

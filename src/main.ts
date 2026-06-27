@@ -447,14 +447,19 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
       </div>`;
   }
 
-  const head = (seat: Seat | null, grad: string) => seat
-    ? `<div class="cmp__head" style="background:${grad}"><div class="nm">${esc(seat.current_name)}</div><div class="st">${esc(seat.state)} · ${seat.current_seat.split(" ")[0]}</div><div class="hold">${partyLogo(seat.current_holder.party_uid, seat.current_holder.party, partyColor(seat.current_holder.party), 30)} ${esc(seat.current_holder.party)}</div></div>`
-    : `<div class="cmp__head cmp__head--pick" style="background:${grad}"><div class="nm">Pick a seat</div><div class="searchmini"><input id="friendq" type="search" autocomplete="off" placeholder="Search a friend's seat…"><ul class="ac" id="friendac"></ul></div></div>`;
+  const head = (seat: Seat | null, grad: string, pickable = false) => {
+    if (!seat)
+      return `<div class="cmp__head cmp__head--pick" style="background:${grad}"><div class="nm">Pick a seat</div><div class="searchmini"><input id="friendq" type="search" autocomplete="off" placeholder="Search a friend's seat…"><ul class="ac" id="friendac"></ul></div></div>`;
+    const body = `<div class="nm">${esc(seat.current_name)}</div><div class="st">${esc(seat.state)} · ${seat.current_seat.split(" ")[0]}</div><div class="hold">${partyLogo(seat.current_holder.party_uid, seat.current_holder.party, partyColor(seat.current_holder.party), 30)} ${esc(seat.current_holder.party)}</div>`;
+    return pickable
+      ? `<button type="button" id="cmp-changeB" class="cmp__head cmp__head--change" style="background:${grad}" title="Change comparison seat">${body}<span class="cmp__change">⇄ Change seat</span></button>`
+      : `<div class="cmp__head" style="background:${grad}">${body}</div>`;
+  };
 
   app.innerHTML = `<div class="cmp"><div class="cmp__inner">
     <div class="cmp__top"><button id="cmp-back" class="ghostbtn">← Back</button><h1>Head to head</h1><span style="width:60px"></span></div>
     <div class="cmp__grid">
-      <div class="cmp__heads">${head(a, gradA)}${head(bIn, gradB)}</div>
+      <div class="cmp__heads">${head(a, gradA)}${head(bIn, gradB, true)}</div>
       ${bIn ? `
         ${metricBar("Elections since 1955", a.n_contests, bIn.n_contests, (v) => String(Math.round(v)), true)}
         ${metricBar("Winning parties", a.n_distinct_winning_parties, bIn.n_distinct_winning_parties, (v) => String(Math.round(v)), true)}
@@ -475,6 +480,7 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
   if (bIn) {
     document.getElementById("cmp-copy")!.onclick = () => { navigator.clipboard.writeText(location.href); toast("Compare link copied"); };
     document.getElementById("cmp-toA")!.onclick = () => { history.pushState({}, "", `${BASE}seat/${a.slug}/`); renderDeck(a, returnSlide); };
+    document.getElementById("cmp-changeB")!.onclick = () => go(a.slug, "__pick__");
   } else {
     const fi = document.getElementById("friendq") as HTMLInputElement;
     const fac = document.getElementById("friendac")!;

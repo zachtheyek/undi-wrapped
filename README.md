@@ -7,7 +7,7 @@ the closest calls, and how marginal your seat is right now.
 
 🔗 **Live:** https://zachtheyek.github.io/undi-wrapped/
 
-![Undi Wrapped — Bagan](https://zachtheyek.github.io/undi-wrapped/og/p-pulau-pinang-bagan.png)
+![Undi Wrapped — Klang](https://zachtheyek.github.io/undi-wrapped/og/p-selangor-klang.png)
 
 ## Credit
 

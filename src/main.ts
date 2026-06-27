@@ -310,7 +310,7 @@ function renderDeck(s: Seat, startAt = 0) {
       <div class="kicker">The photo finish</div>
       <div class="sub" style="margin-top:4px">Closest call ever, in <strong>${cl.year}</strong> — by just <strong>${num(cl.margin_perc, 2)} pts</strong></div>
       ${headToHead({ party: cl.win_party, uid: cl.win_party_uid, color: partyColor(cl.win_party), perc: cl.win_perc ?? null },
-                   { party: cl.run_party, uid: cl.run_party_uid, color: partyColor(cl.run_party), perc: cl.run_perc ?? null }, "winner&nbsp;vs&nbsp;runner-up")}`);
+                   { party: cl.run_party, uid: cl.run_party_uid, color: partyColor(cl.run_party), perc: cl.run_perc ?? null }, "")}`);
   }
 
   // 7 right now (avatar + logo + marginality)
@@ -452,7 +452,7 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
       return `<div class="cmp__head cmp__head--pick" style="background:${grad}"><div class="nm">Pick a seat</div><div class="searchmini"><input id="friendq" type="search" autocomplete="off" placeholder="Search a friend's seat…"><ul class="ac" id="friendac"></ul></div></div>`;
     const body = `<div class="nm">${esc(seat.current_name)}</div><div class="st">${esc(seat.state)} · ${seat.current_seat.split(" ")[0]}</div><div class="hold">${partyLogo(seat.current_holder.party_uid, seat.current_holder.party, partyColor(seat.current_holder.party), 30)} ${esc(seat.current_holder.party)}</div>`;
     return pickable
-      ? `<div id="cmp-headB" class="cmp__head cmp__head--b" role="button" tabindex="0" style="background:${grad}" title="Click to compare a different seat">${body}<span class="cmp__change">⇄ change</span></div>`
+      ? `<div id="cmp-headB" class="cmp__head cmp__head--b" role="button" tabindex="0" style="background:${grad}" title="Click to compare a different seat">${body}</div>`
       : `<div class="cmp__head" style="background:${grad}">${body}</div>`;
   };
 

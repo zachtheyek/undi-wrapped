@@ -452,9 +452,23 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
       return `<div class="cmp__head cmp__head--pick" style="background:${grad}"><div class="nm">Pick a seat</div><div class="searchmini"><input id="friendq" type="search" autocomplete="off" placeholder="Search a friend's seat…"><ul class="ac" id="friendac"></ul></div></div>`;
     const body = `<div class="nm">${esc(seat.current_name)}</div><div class="st">${esc(seat.state)} · ${seat.current_seat.split(" ")[0]}</div><div class="hold">${partyLogo(seat.current_holder.party_uid, seat.current_holder.party, partyColor(seat.current_holder.party), 30)} ${esc(seat.current_holder.party)}</div>`;
     return pickable
-      ? `<button type="button" id="cmp-changeB" class="cmp__head cmp__head--change" style="background:${grad}" title="Change comparison seat">${body}<span class="cmp__change">⇄ Change seat</span></button>`
+      ? `<div id="cmp-headB" class="cmp__head cmp__head--b" role="button" tabindex="0" style="background:${grad}" title="Click to compare a different seat">${body}<span class="cmp__change">⇄ change</span></div>`
       : `<div class="cmp__head" style="background:${grad}">${body}</div>`;
   };
+
+  // wire a seat-search box (used by both the initial picker and the in-place re-pick)
+  function wireSearch(input: HTMLInputElement, ac: HTMLElement, onPick: (slug: string) => void) {
+    let hits: IndexItem[] = [];
+    input.addEventListener("input", () => {
+      const q = input.value.trim().toLowerCase();
+      if (q.length < 2) { ac.innerHTML = ""; hits = []; return; }
+      hits = idx.filter((x) => x.slug !== a.slug && (x.name.toLowerCase().includes(q) || x.state.toLowerCase().includes(q) || x.seat_no.toLowerCase().includes(q)))
+        .sort((x, y) => (x.type === y.type ? 0 : x.type === "federal" ? -1 : 1)).slice(0, 16);
+      ac.innerHTML = hits.map((h) => `<li data-slug="${h.slug}">${dot(coalitionColor(h.coalition))}<span class="seatno">${esc(h.seat_no)}</span> <span>${esc(h.name)} <span class="st">· ${esc(h.state)}</span></span></li>`).join("");
+      ac.querySelectorAll("li").forEach((li) => li.addEventListener("mousedown", (e) => { e.preventDefault(); onPick((li as HTMLElement).dataset.slug!); }));
+    });
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && hits.length) { e.preventDefault(); onPick(hits[0].slug); } });
+  }
 
   app.innerHTML = `<div class="cmp"><div class="cmp__inner">
     <div class="cmp__top"><button id="cmp-back" class="ghostbtn">← Back</button><h1>Head to head</h1><span style="width:60px"></span></div>
@@ -480,19 +494,37 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
   if (bIn) {
     document.getElementById("cmp-copy")!.onclick = () => { navigator.clipboard.writeText(location.href); toast("Compare link copied"); };
     document.getElementById("cmp-toA")!.onclick = () => { history.pushState({}, "", `${BASE}seat/${a.slug}/`); renderDeck(a, returnSlide); };
-    document.getElementById("cmp-changeB")!.onclick = () => go(a.slug, "__pick__");
+    // in-place re-pick: click seat B's header to search a new comparison without
+    // disturbing the rest of the page — commit on select/Enter, cancel on Esc/blur.
+    const headB = document.getElementById("cmp-headB")!;
+    let editing = false;
+    const enterEdit = () => {
+      if (editing) return;
+      editing = true;
+      const restore = headB.innerHTML;
+      let committing = false;
+      headB.classList.add("cmp__head--editing");
+      headB.innerHTML = `<div class="searchmini"><input type="search" autocomplete="off"><ul class="ac"></ul></div>`;
+      const input = headB.querySelector("input") as HTMLInputElement;
+      const ac = headB.querySelector(".ac") as HTMLElement;
+      input.value = bIn!.current_name;
+      wireSearch(input, ac, (slug) => { committing = true; go(a.slug, slug); });
+      const cancel = () => {
+        if (committing || !editing) return;
+        editing = false;
+        headB.classList.remove("cmp__head--editing");
+        headB.innerHTML = restore; // resets the typed string back to B's name
+      };
+      input.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); cancel(); } });
+      input.addEventListener("blur", () => setTimeout(cancel, 150));
+      input.focus(); input.select();
+    };
+    headB.addEventListener("click", enterEdit);
+    headB.addEventListener("keydown", (e) => { if (!editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); enterEdit(); } });
   } else {
     const fi = document.getElementById("friendq") as HTMLInputElement;
-    const fac = document.getElementById("friendac")!;
+    wireSearch(fi, document.getElementById("friendac")!, (slug) => go(a.slug, slug));
     fi.focus();
-    fi.addEventListener("input", () => {
-      const q = fi.value.trim().toLowerCase();
-      if (q.length < 2) { fac.innerHTML = ""; return; }
-      const hits = idx.filter((x) => x.slug !== a.slug && (x.name.toLowerCase().includes(q) || x.state.toLowerCase().includes(q) || x.seat_no.toLowerCase().includes(q)))
-        .sort((x, y) => (x.type === y.type ? 0 : x.type === "federal" ? -1 : 1)).slice(0, 16);
-      fac.innerHTML = hits.map((h) => `<li data-slug="${h.slug}">${dot(coalitionColor(h.coalition))}<span class="seatno">${esc(h.seat_no)}</span> <span>${esc(h.name)} <span class="st">· ${esc(h.state)}</span></span></li>`).join("");
-      fac.querySelectorAll("li").forEach((li) => li.addEventListener("mousedown", (e) => { e.preventDefault(); go(a.slug, (li as HTMLElement).dataset.slug!); }));
-    });
   }
 }
 

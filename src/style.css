@@ -152,9 +152,10 @@ img { display: block; }
 .cmp__head .st { font-size: 13px; opacity: .85; }
 .cmp__head .hold { display: inline-flex; align-items: center; gap: 6px; justify-content: center; font-size: 12px; font-weight: 600; opacity: .92; margin-top: 6px; }
 .cmp__head--pick { outline: 2px dashed rgba(255,255,255,.4); }
-.cmp__head--change { outline: 2px solid transparent; transition: outline-color .15s; -webkit-tap-highlight-color: transparent; }
-.cmp__head--change:hover, .cmp__head--change:focus-visible { outline-color: rgba(255,255,255,.6); }
-.cmp__change { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .85; margin-top: 8px; }
+.cmp__head--b { cursor: pointer; outline: 2px solid transparent; transition: outline-color .15s; -webkit-tap-highlight-color: transparent; }
+.cmp__head--b:hover, .cmp__head--b:focus-visible { outline-color: rgba(255,255,255,.6); }
+.cmp__head--editing { cursor: default; outline: none !important; }
+.cmp__change { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .8; margin-top: 8px; }
 .searchmini { position: relative; margin-top: 8px; }
 .searchmini input { width: 100%; padding: 11px 13px; border-radius: 11px; border: 0; background: rgba(0,0,0,.3); color: #fff; font-size: 14px; outline: none; }
 .searchmini input::placeholder { color: rgba(255,255,255,.65); }

@@ -481,9 +481,9 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
         ${metricBar("Closest ever (pts)", a.closest?.margin_perc ?? null, bIn.closest?.margin_perc ?? null, (v) => num(v, 2), false)}
         ${metricBar("Marginality rank (1 = tightest)", a.marginality_rank?.rank ?? null, bIn.marginality_rank?.rank ?? null, (v) => "#" + Math.round(v), false)}
         ${metricBar("Latest turnout (%)", a.current_holder.turnout, bIn.current_holder.turnout, (v) => num(v), true)}
-        <div class="cmp__legend"><span><i style="background:#ff5e7a"></i>${esc(a.current_name)}</span><span><i style="background:#37c7d4"></i>${esc(bIn.current_name)}</span> · each bar splits the two seats; the bold number leads</div>
+        <div class="cmp__legend"><span><i style="background:#ff5e7a"></i>${esc(a.current_name)}</span><span><i style="background:#37c7d4"></i>${esc(bIn.current_name)}</span></div>
         <div class="cmp__actions">
-          <button class="primary" id="cmp-copy">🔗 Copy compare link</button>
+          <button class="primary" id="cmp-copy">🔗 Share this head-to-head</button>
           <button id="cmp-toA">← Back to ${esc(a.current_name)}</button>
         </div>` : `<p class="cmp__hint">Search a friend's seat on the right to see the two go head to head.</p>`}
     </div>
@@ -492,7 +492,7 @@ async function renderCompare(a: Seat, bIn: Seat | null) {
 
   document.getElementById("cmp-back")!.onclick = () => { history.pushState({}, "", `${BASE}seat/${a.slug}/`); renderDeck(a, returnSlide); };
   if (bIn) {
-    document.getElementById("cmp-copy")!.onclick = () => { navigator.clipboard.writeText(location.href); toast("Compare link copied"); };
+    document.getElementById("cmp-copy")!.onclick = () => { navigator.clipboard.writeText(location.href); toast("Link copied"); };
     document.getElementById("cmp-toA")!.onclick = () => { history.pushState({}, "", `${BASE}seat/${a.slug}/`); renderDeck(a, returnSlide); };
     // in-place re-pick: click seat B's header to search a new comparison without
     // disturbing the rest of the page — commit on select/Enter, cancel on Esc/blur.

@@ -86,8 +86,8 @@ Every push to `main` builds and deploys to GitHub Pages
 the pipeline + `build_data.py`, and commits + redeploys **only when the seat data actually
 changes** — so the site tracks upstream corrections and new results on its own.
 
-**Boundaries are deliberately *not* on a schedule.** Unlike results — which change at every
-by-election — constituency boundaries only move at a *redelineation*: a roughly once-a-decade,
+**Boundaries are deliberately _not_ on a schedule.** Unlike results — which change at every
+by-election — constituency boundaries only move at a _redelineation_: a roughly once-a-decade,
 publicly-gazetted event (the last federal one completed in 2018, and the Constitution bars
 another within 8 years of the last). Nor is it a passive feed — the delimitation years are
 hard-coded in `boundary_build.py`'s `REGION_YEARS`, and a redelineation splits, merges and

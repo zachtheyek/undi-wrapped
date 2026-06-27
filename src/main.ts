@@ -313,7 +313,7 @@ function renderDeck(s: Seat, startAt = 0) {
                    { party: cl.run_party, uid: cl.run_party_uid, color: partyColor(cl.run_party), perc: cl.run_perc ?? null }, "")}`);
   }
 
-  // 7 right now (avatar + logo + marginality)
+  // 7 right now (rep name + logo + marginality)
   const mr = s.marginality_rank;
   cards.push(`
     <div class="kicker">Right now</div>

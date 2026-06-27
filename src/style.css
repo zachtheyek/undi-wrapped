@@ -66,7 +66,7 @@ img { display: block; }
 .partyline { display: flex; align-items: center; gap: 9px; margin-top: 12px; font-size: clamp(17px,4.6vw,20px); flex-wrap: wrap; }
 .avrow { display: flex; margin: 16px 0 8px; }
 
-/* logos + avatars */
+/* logos */
 .logowrap { display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .logo { object-fit: contain; border-radius: 6px; background: rgba(255,255,255,.92); padding: 3px; }
 .logobadge { display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; color: #fff; font-size: 14px; flex: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }

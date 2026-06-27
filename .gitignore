@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.maps-cache/
 .DS_Store
 *.log
 * [0-9].json

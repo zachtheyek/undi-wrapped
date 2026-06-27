@@ -15,10 +15,15 @@ Source: electiondata.my open data lake (MECo electoral maps, CC0).
 No external geo deps — plain GeoJSON + an iterative Douglas–Peucker.
 """
 from __future__ import annotations
-import json, re, math, unicodedata
+import json, math, os, re, unicodedata
 from pathlib import Path
+from urllib.request import urlopen
 
-MAPS = Path("/Users/zach/Documents/Projects/in_progress/_maps")
+# MECo electoral maps (CC0), served as {region}_{year}_{level}.geojson.
+LAKE = "https://lake.electiondata.my/maps/delimitations"
+# Local cache for the downloaded GeoJSONs (gitignored). Override with MAPS_DIR.
+MAPS = Path(os.environ.get("MAPS_DIR") or (Path(__file__).resolve().parents[1] / ".maps-cache"))
+MAPS.mkdir(parents=True, exist_ok=True)
 DATA = Path("public/data")
 OUT = Path("public/boundaries"); OUT.mkdir(parents=True, exist_ok=True)
 
@@ -43,6 +48,23 @@ def norm(name: str) -> str:
     name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower().strip()
     repl = {"datoh": "datuk", "datok": "datuk", "bahru": "baru", "baharu": "baru", "ulu": "hulu", "hilor": "hilir"}
     return " ".join(repl.get(t, t) for t in re.split(r"\s+", name) if t)
+
+# ---- ensure the delimitation GeoJSONs are present (fetched fresh from the lake) ----
+# Default behaviour is a full re-download so a rerun detects upstream drift; set
+# SKIP_FETCH=1 to reuse whatever is already cached (offline / quick dev rebuilds).
+SKIP_FETCH = os.environ.get("SKIP_FETCH") == "1"
+print(f"maps cache: {MAPS}" + ("  (SKIP_FETCH: using cached files)" if SKIP_FETCH else ""))
+for (level, region), years in REGION_YEARS.items():
+    for y in years:
+        fp = MAPS / f"{region}_{y}_{level}.geojson"
+        if SKIP_FETCH and fp.exists():
+            continue
+        try:
+            with urlopen(f"{LAKE}/{region}_{y}_{level}.geojson", timeout=120) as r:
+                fp.write_bytes(r.read())
+        except Exception as e:  # tolerate a missing/down map — fall back to cache if any
+            note = "" if fp.exists() else "  (no cached copy — this delimitation's frames will be missing)"
+            print(f"  WARN {fp.name}: {e}{note}")
 
 # ---- load all delimitation features: maps[region][year] = {(state,normname): [rings...]} ----
 def rings_of(geom):
@@ -138,3 +160,5 @@ report = [f"seats with boundaries: {written}/{len(index)}",
           f"total size: {sum(f.stat().st_size for f in OUT.glob('*.json'))/1e6:.2f} MB"]
 Path("/tmp/boundary_report.txt").write_text("\n".join(report))
 print("\n".join(report))
+print("\nNow run `git status public/boundaries` — any diff means the maps drifted "
+      "since the last commit; commit it to publish the update.")

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "data": "python3 scripts/build_data.py",
+    "boundaries": "python3 scripts/boundary_build.py",
     "dev": "vite",
     "build": "vite build && node scripts/gen_og.mjs && node scripts/prerender.mjs",
     "og": "node scripts/gen_og.mjs",

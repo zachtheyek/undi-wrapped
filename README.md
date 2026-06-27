@@ -67,10 +67,10 @@ This project only visualises that corpus. It is **not affiliated** with the auth
 
 ```bash
 npm install
-npm run data      # regenerate public/data/ from ../meco-data/out (needs the foundation + Python)
-python scripts/boundary_build.py   # regenerate public/boundaries/ from MECo electoral maps
-npm run dev       # local dev
-npm run build     # vite build + 822 OG cards (satori) + per-seat prerender → dist/
+npm run data        # regenerate public/data/ from ../meco-data/out (needs the foundation + Python)
+npm run boundaries  # fetch the latest electoral maps from the lake + rebuild public/boundaries/
+npm run dev         # local dev
+npm run build       # vite build + 822 OG cards (satori) + per-seat prerender → dist/
 ```
 
 `public/data/`, `public/boundaries/` and `public/logos/` are committed, so CI builds need
@@ -84,8 +84,26 @@ Every push to `main` builds and deploys to GitHub Pages
 (`.github/workflows/deploy.yml`). A **weekly** scheduled workflow
 (`.github/workflows/refresh-data.yml`) re-pulls the latest MECo CSVs from the corpus, reruns
 the pipeline + `build_data.py`, and commits + redeploys **only when the seat data actually
-changes** — so the site tracks upstream corrections and new results on its own. (Boundaries
-are not auto-refreshed; rerun `boundary_build.py` by hand after a redelineation.)
+changes** — so the site tracks upstream corrections and new results on its own.
+
+**Boundaries are deliberately *not* on a schedule.** Unlike results — which change at every
+by-election — constituency boundaries only move at a *redelineation*: a roughly once-a-decade,
+publicly-gazetted event (the last federal one completed in 2018, and the Constitution bars
+another within 8 years of the last). Nor is it a passive feed — the delimitation years are
+hard-coded in `boundary_build.py`'s `REGION_YEARS`, and a redelineation splits, merges and
+renames seats, which is exactly when the `(state, normalised name)` frame-matching needs a
+human to sanity-check it. A blind weekly cron would re-download tens of MB to find nothing
+~every time, and could half-update the site at the one moment care is actually needed. So a
+refresh is a single manual command:
+
+```bash
+npm run boundaries             # fetches the latest maps from the lake + rebuilds public/boundaries/
+git status public/boundaries   # any diff = the maps drifted upstream; commit it to publish
+```
+
+(If a brand-new delimitation has been gazetted, add its year to `REGION_YEARS` first.)
+**Think a seat's boundaries look out of date?
+[Open an issue](https://github.com/zachtheyek/undi-wrapped/issues) and we'll rerun the refresh.**
 
 ## Licence
 

@@ -1,0 +1,109 @@
+name: Weekly data refresh
+
+# Pulls the latest Malaysian Election Corpus, regenerates the seat JSON through
+# the shared pipeline, and (only if anything actually changed) commits the fresh
+# data and redeploys the site. Election results change rarely, so most weekly
+# runs are a no-op. Boundaries are NOT regenerated here — they only move at a
+# redelineation and need the separate maps source; rerun boundary_build.py by
+# hand if that ever happens.
+
+on:
+  schedule:
+    - cron: "0 18 * * 0" # Sundays 18:00 UTC (~02:00 Mon Malaysia time)
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild & deploy even if the data is unchanged"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # commit refreshed data back to the repo
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages # serialise with the push-triggered deploy workflow
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout undi-wrapped
+        uses: actions/checkout@v4
+
+      - name: Clone the shared MECo pipeline (meco-data)
+        run: git clone --depth 1 https://github.com/zachtheyek/meco-data.git ../meco-data
+
+      - name: Refresh raw CSVs from the Malaysian Election Corpus
+        working-directory: ../meco-data/raw
+        run: |
+          base="https://raw.githubusercontent.com/Thevesh/paper-meco-results/main/data"
+          for f in consol_ballots consol_stats corrections \
+                   lookup_candidate lookup_coalition lookup_coalition_succession \
+                   lookup_dates lookup_party lookup_party_succession lookup_prk; do
+            if curl -fsSL "$base/$f.csv" -o "$f.csv.new"; then
+              mv "$f.csv.new" "$f.csv"; echo "refreshed $f.csv"
+            else
+              rm -f "$f.csv.new"; echo "kept existing $f.csv (upstream fetch failed)"
+            fi
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install data dependencies
+        run: pip install pandas pyarrow
+
+      - name: Rebuild parquet (shared pipeline)
+        working-directory: ../meco-data
+        run: python pipeline.py
+
+      - name: Rebuild seat JSON
+        run: python scripts/build_data.py
+
+      - name: Commit refreshed data (if changed)
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No data changes this week."
+          else
+            git commit -m "chore(data): weekly refresh from the Malaysian Election Corpus"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Data changed — committed and will redeploy."
+          fi
+
+      - name: Set up Node
+        if: steps.commit.outputs.changed == 'true' || inputs.force
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build site
+        if: steps.commit.outputs.changed == 'true' || inputs.force
+        run: npm ci && npm run build
+        env:
+          SITE_URL: https://zachtheyek.github.io/undi-wrapped
+
+      - name: Upload Pages artifact
+        if: steps.commit.outputs.changed == 'true' || inputs.force
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        if: steps.commit.outputs.changed == 'true' || inputs.force
+        uses: actions/deploy-pages@v4

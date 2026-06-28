@@ -1,8 +1,13 @@
 name: Deploy to GitHub Pages
 
+# Builds the site from the live MECo foundation (zachtheyek/meco-data) on every push
+# AND weekly — so when the underlying data is refreshed, the site updates itself with
+# no code change. public/data is generated here; logos & boundaries stay committed.
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "37 20 * * 0"   # Sundays 20:37 UTC — pick up any refreshed MECo data
   workflow_dispatch:
 
 permissions:
@@ -19,17 +24,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: undi-wrapped
+      - uses: actions/checkout@v4
+        with:
+          repository: zachtheyek/meco-data   # the shared data foundation (public)
+          path: meco-data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas pyarrow
+      - name: Generate data from MECo foundation
+        run: python scripts/build_data.py     # reads ../meco-data/out -> writes public/data
+        working-directory: undi-wrapped
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: undi-wrapped/package-lock.json
       - run: npm ci
+        working-directory: undi-wrapped
       - run: npm run build
+        working-directory: undi-wrapped
         env:
           SITE_URL: https://zachtheyek.github.io/undi-wrapped
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: undi-wrapped/dist
 
   deploy:
     needs: build

@@ -3,6 +3,11 @@ dist/
 .maps-cache/
 .DS_Store
 *.log
+
+# Per-seat data is generated from the MECo foundation at build time (locally:
+# `npm run data`; in CI: the deploy workflow). Not committed. Logos & boundaries
+# (external assets, rarely change) stay committed.
+public/data/
 * [0-9].json
 * [0-9].png
 announcement-assets/

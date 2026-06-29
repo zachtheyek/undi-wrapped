@@ -37,21 +37,24 @@ This project only visualises that corpus. It is **not affiliated** with the auth
 
 ## Methodology & honest caveats
 
-- **Seat threading.** Malaysian seat identity is _not_ stable across delimitations:
-  numbers are reassigned and names change (`P.001` was _Wellesley North → Perlis Utara →
-  Kangar → Padang Besar_). We thread a seat's history by **normalised name within a
-  state**, which is honest but name-based, not boundary-based. A seat's pre-rename history
-  may therefore be incomplete. For true boundary lineage, see the geospatial seat view on
-  [electiondata.my](https://electiondata.my/seats/).
+- **Seat threading.** Malaysian seat identity is _not_ stable across delimitations: numbers
+  are reassigned, names change, and a seat can even **keep its name while its boundaries are
+  wholly replaced** — pre-2003 _P.190 Tawau_ has **zero** overlap with today's Tawau (its real
+  ancestor is the old _Semporna_). So we thread each seat's history by **electiondata.my's
+  boundary-based dominant-ancestor lineage**, not by name, so every "Wrapped" follows the true
+  line of descent. A split ancestor is legitimately shared by its descendants (1959 _Damansara_
+  feeds 11 modern KL/Selangor seats). Lineage from
+  [electiondata.my](https://electiondata.my/seats/) (CC0).
 - **"Current" seats** = those contested in the most recent election (GE-15 for federal;
   the latest state election per state).
 - **Biggest swing** = the largest absolute change in the winning party's vote share between
   consecutive contests at that seat.
 - **Marginality rank** = rank by latest winning margin among current seats of the same type.
-- **Boundary animation.** Frames are matched to the seat by `(state, normalised name)` across
-  each delimitation, then simplified. Seats that were genuinely _renamed_ (not just
-  renumbered) only show the delimitations under their current name — the same name-threading
-  caveat as above. 821 / 822 seats have at least one frame.
+- **Boundary animation.** The animated outline is still matched by `(state, normalised name)`
+  per delimitation — the map frames are a separate, manually-refreshed feed (see "data
+  freshness"), so for the few seats whose _boundaries_ moved under a stable name the animation
+  can lag the lineage-threaded history above. 821 / 822 seats have at least one frame. (A future
+  pass could align the frames to the lineage.)
 - **Candidate photos.** There is **no public dataset of official candidate portraits**
   keyed to the time each person was elected — across 14k candidates and seven decades it
   simply doesn't exist, and auto-matching faces risks showing the _wrong_ person. We
@@ -73,10 +76,11 @@ npm run dev         # local dev
 npm run build       # vite build + 822 OG cards (satori) + per-seat prerender → dist/
 ```
 
-`public/data/`, `public/boundaries/` and `public/logos/` are committed, so CI builds need
-only Node (no Python, no map downloads). Boundaries are built from MECo's electoral-map
-GeoJSONs; logos are sourced from electiondata.my (CC0 data; logos are party trademarks used
-informationally).
+`public/boundaries/` and `public/logos/` are **committed** (external assets, rarely change);
+`public/data/` is **git-ignored and generated** — locally by `npm run data`, in CI by the
+deploy workflow (which installs Python + clones the foundation). Boundaries are built from
+MECo's electoral-map GeoJSONs; logos are sourced from electiondata.my (CC0 data; logos are
+party trademarks used informationally).
 
 ## Deployment & data freshness
 

@@ -80,11 +80,14 @@ informationally).
 
 ## Deployment & data freshness
 
-Every push to `main` builds and deploys to GitHub Pages
-(`.github/workflows/deploy.yml`). A **weekly** scheduled workflow
-(`.github/workflows/refresh-data.yml`) re-pulls the latest MECo CSVs from the corpus, reruns
-the pipeline + `build_data.py`, and commits + redeploys **only when the seat data actually
-changes** — so the site tracks upstream corrections and new results on its own.
+Per-seat data is **generated in CI, not committed**: the deploy workflow
+(`.github/workflows/deploy.yml`) clones the
+[meco-data](https://github.com/zachtheyek/meco-data) foundation, runs `build_data.py`, and
+builds. Every push deploys; a **weekly** run rebuilds only when the MECo data actually
+changed since the last deploy (stamped in `dist/data-version.txt`), so the site tracks
+upstream corrections and new results on its own — and does nothing on a quiet week. The
+corpus itself auto-refreshes upstream in meco-data, so the whole chain is hands-off.
+(Local one-liner to regenerate seat data from `../meco-data/out`: `npm run data`.)
 
 **Boundaries are deliberately _not_ on a schedule.** Unlike results — which change at every
 by-election — constituency boundaries only move at a _redelineation_: a roughly once-a-decade,
@@ -104,6 +107,16 @@ git status public/boundaries   # any diff = the maps drifted upstream; commit it
 (If a brand-new delimitation has been gazetted, add its year to `REGION_YEARS` first.)
 **Think a seat's boundaries look out of date?
 [Open an issue](https://github.com/zachtheyek/undi-wrapped/issues) and we'll rerun the refresh.**
+
+## Sibling projects
+
+Part of a family of civic data-viz tools built on the Malaysian Election Corpus:
+
+- [**Lompat**](https://zachtheyek.github.io/lompat/) — every party-hop since 1955, and the leaderboard of "frogs"
+- [**Salasilah**](https://zachtheyek.github.io/salasilah/) — the family tree of Malaysia's parties & coalitions
+- [**Nadi Demokrasi**](https://zachtheyek.github.io/nadi-demokrasi/) — the health of the democracy in six indicators
+- [**Undi Lain**](https://zachtheyek.github.io/undi-lain/) — re-run past elections under different voting systems
+- [**Undi Generasi**](https://zachtheyek.github.io/undi-generasi/) — how Malaysia votes across generations
 
 ## Licence
 

@@ -6,10 +6,12 @@ delimitation (1954–2019), simplifies it, normalises all frames to a shared
 viewBox, and writes public/boundaries/<slug>.json. The cover animates these
 frames, looping from the seat's earliest to latest delimitation.
 
-Matching: by (state, normalised name). Most seats keep their name across
-delimitations and are only renumbered, so this threads them correctly; a small
-number that were actually *renamed* will only show the delimitations under their
-current name (documented honestly on the page).
+Matching: by (state, normalised name), but the name used at each delimitation is
+the seat's *lineage* name during that delimitation's period — read straight from
+the seat's timeline (built from electiondata.my's boundary-based dominant-ancestor
+lineage). So a seat whose boundary descends from a differently-named ancestor
+(e.g. today's Tawau ← old Semporna for 1984/1994) animates the correct ancestor
+shape, staying consistent with the lineage-threaded history.
 
 Source: electiondata.my open data lake (MECo electoral maps, CC0).
 No external geo deps — plain GeoJSON + an iterative Douglas–Peucker.
@@ -116,14 +118,21 @@ for item in index:
     seat = json.loads((DATA / "seats" / f"{item['slug']}.json").read_text())
     state = seat["state"]; region = region_of(state)
     level = "parlimen" if seat["seat_type"] == "federal" else "dun"
-    names = {norm(n) for n in seat["all_names"]} | {norm(seat["current_name"])}
+    delim_years = REGION_YEARS[(level, region)]
+    tl = sorted(seat["timeline"], key=lambda t: t["year"])
     frames = []
-    for y in REGION_YEARS[(level, region)]:
+    for i, y in enumerate(delim_years):
+        nexty = delim_years[i + 1] if i + 1 < len(delim_years) else 9999
+        period_names = [t["seat_name"] for t in tl if y <= t["year"] < nexty]   # lineage name(s) at this delim
+        if not period_names:
+            continue
         d = maps.get((level, region, y), {})
         rings = None
-        for nm in names:
-            if (state, nm) in d: rings = d[(state, nm)]; break
-        if rings: frames.append((y, rings))
+        for nm in period_names:                       # normally one distinct name; take the first present
+            if (state, norm(nm)) in d:
+                rings = d[(state, norm(nm))]; break
+        if rings:
+            frames.append((y, rings))
     if not frames: continue
     # shared bbox over all frames + cos(lat) x-correction
     allc = [pt for _, rings in frames for ring in rings for pt in ring]

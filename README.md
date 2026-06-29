@@ -50,11 +50,13 @@ This project only visualises that corpus. It is **not affiliated** with the auth
 - **Biggest swing** = the largest absolute change in the winning party's vote share between
   consecutive contests at that seat.
 - **Marginality rank** = rank by latest winning margin among current seats of the same type.
-- **Boundary animation.** The animated outline is still matched by `(state, normalised name)`
-  per delimitation — the map frames are a separate, manually-refreshed feed (see "data
-  freshness"), so for the few seats whose _boundaries_ moved under a stable name the animation
-  can lag the lineage-threaded history above. 821 / 822 seats have at least one frame. (A future
-  pass could align the frames to the lineage.)
+- **Boundary animation.** The animated outline now follows the **same lineage** as the data:
+  at each delimitation it draws the seat's lineage ancestor active in that period — the name is
+  read straight from the seat's timeline, not guessed from the current name — so e.g. _Tawau_
+  correctly shows the old _Semporna_ shape for its 1984/1994 frames. The map frames remain a
+  separate, manually-refreshed feed (see "data freshness"), so they can still lag the _latest_
+  delimitation, but they no longer contradict the lineage-threaded history above. 821 / 822
+  seats have at least one frame.
 - **Candidate photos.** There is **no public dataset of official candidate portraits**
   keyed to the time each person was elected — across 14k candidates and seven decades it
   simply doesn't exist, and auto-matching faces risks showing the _wrong_ person. We

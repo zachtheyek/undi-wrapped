@@ -197,22 +197,30 @@ function turnoutBars(seatVal: number, natVal: number) {
 
 // ---------- boundary animation ----------
 let boundaryTimer: any = null;
+const FRAME_MS = 1300; // per-frame dwell of the cover's boundary loop
 function clearBoundary() { if (boundaryTimer) { clearInterval(boundaryTimer); boundaryTimer = null; } }
-function mountBoundary(host: HTMLElement, b: Boundary) {
+// Animates the cover boundary, one frame per FRAME_MS. Returns true when a real
+// (multi-frame) loop was started. `onLoop` fires on the tick that would wrap back to the
+// first frame: if it returns true the wrap is suppressed (the caller advanced the deck),
+// otherwise the loop visibly returns to the start — so the wrap is only ever seen while paused.
+function mountBoundary(host: HTMLElement, b: Boundary, onLoop?: () => boolean): boolean {
   const vb = b.vb;
   const groups = b.frames.map((f, i) =>
     `<g class="bframe" data-i="${i}" style="opacity:${i === 0 ? 1 : 0}">${f.paths.map((p) => `<path d="${p}" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.85)" stroke-width="3" stroke-linejoin="round"/>`).join("")}</g>`).join("");
   host.innerHTML = `<svg class="bsvg" viewBox="0 0 ${vb} ${vb}" preserveAspectRatio="xMidYMid meet">${groups}</svg><div class="byear">${b.frames[0].year}</div>`;
-  if (b.frames.length < 2) return;
+  if (b.frames.length < 2) return false;
   const gEls = [...host.querySelectorAll(".bframe")] as HTMLElement[];
   const yEl = host.querySelector(".byear") as HTMLElement;
   let i = 0;
   clearBoundary();
   boundaryTimer = setInterval(() => {
-    i = (i + 1) % b.frames.length;
+    const nextI = (i + 1) % b.frames.length;
+    if (nextI === 0 && onLoop && onLoop()) return;
+    i = nextI;
     gEls.forEach((g, j) => (g.style.opacity = j === i ? "1" : "0"));
     yEl.textContent = String(b.frames[i].year);
-  }, 1300);
+  }, FRAME_MS);
+  return true;
 }
 
 // ---------- deck ----------
@@ -361,19 +369,43 @@ function renderDeck(s: Seat, startAt = 0) {
   const bars = [...document.querySelectorAll("#progress span i")] as HTMLElement[];
   let current = -1, anim: Animation | null = null, paused = false, manualPaused = false;
 
+  // start (or restart) the active slide's progress bar; `onFinish` runs when it fills.
+  function startBar(i: number, duration: number, onFinish: (() => void) | null) {
+    void bars[i].offsetWidth;
+    if (anim) anim.cancel();
+    anim = bars[i].animate([{ width: "0%" }, { width: "100%" }], { duration, fill: "forwards" });
+    anim.onfinish = onFinish;
+    if (paused) anim.pause();
+  }
+
   function show(i: number) {
     if (i < 0 || i >= sections.length) return;
     clearBoundary();
     current = i;
     sections.forEach((sec, j) => sec.classList.toggle("active", j === i));
     bars.forEach((b, j) => { b.style.transition = "none"; b.style.width = j < i ? "100%" : "0%"; });
-    if (i === 0) loadBoundary(s.slug).then((b) => { if (b && current === 0) mountBoundary(document.getElementById("cover-map")!, b); });
-    // animate the active bar
-    void bars[i].offsetWidth;
-    if (anim) anim.cancel();
-    anim = bars[i].animate([{ width: "0%" }, { width: "100%" }], { duration: DURATION, fill: "forwards" });
-    anim.onfinish = () => { if (current < sections.length - 1) show(current + 1); };
-    if (paused) anim.pause();
+    if (i === 0) {
+      // Cover: the slide runs a whole number of passes through every historical boundary,
+      // advancing on the tick that would wrap past the last pass — so a seat with more
+      // delimitations gets a proportionally longer first slide. Very short histories
+      // (< 3 frames) loop twice so the cover isn't over too quickly; 4+ frames loop once.
+      // The wrap is only shown while paused.
+      loadBoundary(s.slug).then((b) => {
+        if (current !== 0) return;
+        const frames = b ? b.frames.length : 0;
+        const loops = frames < 3 ? 2 : 1;
+        let passesLeft = loops;
+        const looped = b ? mountBoundary(document.getElementById("cover-map")!, b, () => {
+          if (paused) return false;            // paused: keep looping, never advance
+          if (--passesLeft > 0) return false;  // more passes to show → loop visibly
+          next();                              // final pass done → advance on the wrap tick
+          return true;
+        }) : false;
+        startBar(0, looped ? loops * frames * FRAME_MS : DURATION, looped ? null : next);
+      });
+    } else {
+      startBar(i, DURATION, next);
+    }
   }
   function next() { if (current < sections.length - 1) show(current + 1); }
   function prev() { if (current > 0) show(current - 1); }

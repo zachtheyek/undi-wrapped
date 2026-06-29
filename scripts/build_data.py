@@ -36,17 +36,27 @@ def U(v):  # uid / string or None
 def F(v, d=2):  # float or None
     return round(float(v), d) if pd.notna(v) else None
 
-# ---- define "current" seats = contested in the most recent election ----------
-fed_keys = set(contests[(contests.election == "GE-15") & (contests.seat_type == "federal")]["seat_key"])
-state_keys = set()
-for state, g in contests[contests.seat_type == "state"].groupby("state"):
-    se = g[g.election.str.startswith("SE-")]
-    if not len(se):
-        continue
-    latest_round = se.sort_values("date").iloc[-1]["election"]
-    state_keys |= set(g[g.election == latest_round]["seat_key"])
-current_keys = fed_keys | state_keys
-cur = contests[contests["seat_key"].isin(current_keys)].copy()
+# ---- thread each current seat by its boundary-based lineage (electiondata.my) -------
+# A seat's history is the contests in its *dominant-ancestor* chain, NOT a name match — so
+# P.190 Tawau correctly traces back through Semporna (not the unrelated 1986 "Tawau"), and a
+# split ancestor (1959 Damansara → 11 modern KL/Selangor seats) is shared by all of its
+# descendants. The lineage lookup is built by meco-data/fetch_lineage.py (see HANDOFF).
+lineage = pd.read_parquet(FOUND / "seat_lineage.parquet")   # slug, date, state, seat
+cur = lineage.merge(contests, on=["date", "state", "seat"], how="inner")
+
+# Future-proofing so routine refreshes work without re-fetching lineage: attach any contest
+# NEWER than the lineage snapshot (a new GE/SE under unchanged boundaries) to its current
+# seat by name. Only post-snapshot contests use this — historical renames are already in
+# `cur`, and a fresh redelineation still needs a manual `fetch_lineage.py` run (rare).
+def _bare(seat: str) -> str:
+    return slugify(re.sub(r"^[PN]\.\d+\s+", "", seat))
+_latest = lineage.sort_values("date").groupby("slug").tail(1)
+_cur_name = {(st, _bare(seat)): slug for slug, st, seat in _latest[["slug", "state", "seat"]].itertuples(index=False, name=None)}
+_snapshot_max = lineage["date"].max()
+_extra = contests[(~contests["contest_id"].isin(set(cur["contest_id"]))) & (contests["date"] > _snapshot_max)].copy()
+if len(_extra):
+    _extra["slug"] = [_cur_name.get((st, _bare(seat))) for st, seat in zip(_extra["state"], _extra["seat"])]
+    cur = pd.concat([cur, _extra[_extra["slug"].notna()]], ignore_index=True)
 
 fed15 = contests[(contests.election == "GE-15") & (contests.seat_type == "federal")]
 nat = {
@@ -62,11 +72,12 @@ for elec, g in contests[contests.seat_type == "state"].groupby("election"):
 
 index = []
 N = 0
-for key, g in cur.groupby("seat_key"):
+for api_slug, g in cur.groupby("slug"):
     g = g.sort_values("date").reset_index(drop=True)
     latest, first = g.iloc[-1], g.iloc[0]
     stype = latest["seat_type"]
-    slug = seat_slug(latest)
+    slug = seat_slug(latest)        # derived from the current name -> stable public URL
+    key = latest["seat_key"]        # current seat_key, for the marginality-rank lookups
 
     # uid lookups for parties seen here
     puid = g.dropna(subset=["win_party"]).drop_duplicates("win_party").set_index("win_party")["win_party_uid"].to_dict()
